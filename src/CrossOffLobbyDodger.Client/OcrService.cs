@@ -32,7 +32,7 @@ public sealed class OcrService : IDisposable
     {
         using Bitmap prepared = PrepareForLobbyText(source, threshold);
         using var memory = new MemoryStream();
-        prepared.Save(memory, ImageFormat.Png);
+        prepared.Save(memory, System.Drawing.Imaging.ImageFormat.Png);
         using var image = TesseractOCR.Pix.Image.LoadFromMemory(memory.ToArray());
         using var page = _engine.Process(image, PageSegMode.SparseText);
         return new OcrScan(page.Text?.Trim() ?? string.Empty, page.MeanConfidence);

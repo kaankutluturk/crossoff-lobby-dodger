@@ -21,7 +21,7 @@ public sealed class AlertForm : Form
         var title = new Label
         {
             Text = "BLACKLIST MATCH DETECTED",
-            Font = new Font(SystemFonts.MessageBoxFont.FontFamily, 16, FontStyle.Bold),
+            Font = new Font(SystemFonts.MessageBoxFont?.FontFamily ?? FontFamily.GenericSansSerif, 16, FontStyle.Bold),
             ForeColor = Color.FromArgb(255, 92, 92),
             AutoSize = true,
             Location = new Point(24, 22)
@@ -30,7 +30,7 @@ public sealed class AlertForm : Form
         var details = new Label
         {
             Text = $"Alias: {match.Alias}\r\nGroup: {match.Entry.Group}\r\nReason: {match.Entry.Reason}",
-            Font = new Font(SystemFonts.MessageBoxFont.FontFamily, 10),
+            Font = new Font(SystemFonts.MessageBoxFont?.FontFamily ?? FontFamily.GenericSansSerif, 10),
             AutoSize = false,
             Location = new Point(26, 72),
             Size = new Size(468, 105)
