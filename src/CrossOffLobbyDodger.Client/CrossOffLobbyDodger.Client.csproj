@@ -12,6 +12,7 @@
     <AssemblyName>CrossOffLobbyDodger</AssemblyName>
     <RootNamespace>CrossOff.LobbyDodger</RootNamespace>
     <ApplicationManifest>app.manifest</ApplicationManifest>
+    <ApplicationIcon>app.ico</ApplicationIcon>
   </PropertyGroup>
 
   <ItemGroup>

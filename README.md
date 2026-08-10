@@ -1,26 +1,29 @@
+<div align="center">
+
 # Lobby dodger for DBD Ranked cross-off queues
+
+**Local OCR · Reviewed blacklist · Optional automatic dodge**
 
 [![CI](https://github.com/kaankutluturk/crossoff-lobby-dodger/actions/workflows/ci.yml/badge.svg)](https://github.com/kaankutluturk/crossoff-lobby-dodger/actions/workflows/ci.yml)
 [![Latest release](https://img.shields.io/github/v/release/kaankutluturk/crossoff-lobby-dodger)](https://github.com/kaankutluturk/crossoff-lobby-dodger/releases/latest)
+[![Downloads](https://img.shields.io/github/downloads/kaankutluturk/crossoff-lobby-dodger/total)](https://github.com/kaankutluturk/crossoff-lobby-dodger/releases)
+[![Windows x64](https://img.shields.io/badge/platform-Windows%20x64-357a68)](https://github.com/kaankutluturk/crossoff-lobby-dodger/releases/latest)
 
-A small Windows OCR helper for [DBD Ranked](https://discord.com/servers/dbdranked-1410340318250926182) cross-off lobbies. It reads the visible lobby-name area locally, checks names against a reviewed blacklist, warns on matches, and can optionally complete the normal lobby-leave flow.
+A small Windows helper built specifically for [DBD Ranked](https://discord.com/servers/dbdranked-1410340318250926182) cross-off lobbies. It recognizes visible lobby names locally, checks them against a reviewed blacklist, warns on matches, and can optionally complete the normal lobby-leave flow.
 
-Built specifically around the DBD Ranked cross-off queue. It is not official Behaviour Interactive software.
+**[Download for Windows](https://github.com/kaankutluturk/crossoff-lobby-dodger/releases/latest)** · [View the blacklist](blacklist/blacklist.json) · [Submit evidence](https://github.com/kaankutluturk/crossoff-lobby-dodger/issues/new?template=blacklist-submission.yml)
 
-**[Download the latest Windows release](https://github.com/kaankutluturk/crossoff-lobby-dodger/releases/latest)** · [View the blacklist](blacklist/blacklist.json) · [Submit evidence](https://github.com/kaankutluturk/crossoff-lobby-dodger/issues/new?template=blacklist-submission.yml)
+</div>
 
-## What it does
+## At a glance
 
-- Watches only the lobby-name area you select and runs OCR locally.
-- Compares visible names with the reviewed blacklist stored in this repository.
-- Requires the same name to appear in consecutive scans before reacting.
-- Shows the warning first, including the alias, group, reason, and evidence.
-- In automatic mode, waits briefly and sends `Esc`, followed by `Enter`, to use DBD's normal leave-lobby confirmation.
-- In manual mode, warns without sending any keyboard input.
+| Local OCR | Reviewed blacklist | Two dodge modes |
+| --- | --- | --- |
+| Reads only the screen area you select. Screenshots and recognized names stay on your PC. | Downloads the versioned GitHub list and retains a local fallback cache. | Warn only, or show the warning and automatically send `Esc` followed by `Enter`. |
 
-The same scan path is used on both sides of a cross-off lobby, so there is no separate killer/survivor setup.
+A visible name must match in consecutive scans before the client reacts. The same scan path works from both sides of a cross-off lobby, so there is no separate killer/survivor setup.
 
-## Use it
+## Quick start
 
 1. Download `CrossOffLobbyDodger-win-x64.zip` from the [latest release](https://github.com/kaankutluturk/crossoff-lobby-dodger/releases/latest).
 2. Extract the complete ZIP and open `CrossOffLobbyDodger.exe`.
@@ -28,24 +31,39 @@ The same scan path is used on both sides of a cross-off lobby, so there is no se
 4. Run **Test OCR** while a lobby is visible.
 5. Choose automatic leaving or warning-only mode, then start monitoring.
 
-Borderless or windowed mode is recommended. Exclusive fullscreen can prevent ordinary screen capture from seeing the game. Select the area again after changing resolution, monitor layout, or UI scale.
+> [!TIP]
+> Borderless or windowed mode is recommended. Exclusive fullscreen can prevent ordinary screen capture from seeing the game. Select the area again after changing resolution, monitor layout, or UI scale.
 
-## Blacklist
+## Match behavior
 
-The current backend is [`blacklist/blacklist.json`](blacklist/blacklist.json). It starts empty intentionally. Only reviewed entries marked `active` are matched.
-
-Blacklist submissions should include photo or video evidence. A maintainer reviews the evidence before the live list changes; direct unreviewed additions should not be merged. The planned Discord bot integration may eventually replace this GitHub-backed workflow; the JSON stays for now.
-
-Player names can be changed, copied, or imitated. A warning means the visible text matched an approved alias—it does not prove that the current player owns the original account or is grouped with anyone else.
+| Mode | After a confirmed blacklist match |
+| --- | --- |
+| **Automatic** | Shows a non-activating warning first, waits briefly, sends `Esc`, verifies that DBD still has focus, then sends `Enter` and reports the result. |
+| **Manual** | Shows the same alias, group, reason, and evidence warning without sending keyboard input. |
 
 ## Screen-only boundary
 
-The client captures a user-selected screen rectangle, downloads the public blacklist over HTTPS, and can send normal Windows keyboard input. It does not attach to DBD, read or write game memory, inject code, install a driver, inspect game files, or upload screenshots/OCR output.
+| The client does | The client does not |
+| --- | --- |
+| Capture a user-selected screen rectangle | Attach to the Dead by Daylight process |
+| Run OCR locally with the bundled English model | Read or write game memory |
+| Download the public blacklist over HTTPS | Inject code or install a driver |
+| Send normal Windows keyboard input when enabled | Inspect game files or network traffic |
+| Cache settings and the last valid blacklist locally | Upload screenshots, OCR output, or recognized names |
 
-That narrow boundary reduces interaction with the game, but it is not an anti-cheat guarantee. The executable is currently unsigned, the complete source is public, and users run it at their own risk.
+> [!NOTE]
+> The narrow screen-only design reduces interaction with the game, but it is not an anti-cheat guarantee. This is not official Behaviour Interactive software, the executable is currently unsigned, and users run it at their own risk.
+
+## Blacklist and moderation
+
+The current backend is the versioned [`blacklist/blacklist.json`](blacklist/blacklist.json) file. It starts empty intentionally, and only reviewed entries marked `active` are matched.
+
+Submissions should include photo or video evidence. A maintainer reviews the evidence before the live list changes; direct unreviewed additions should not be merged. The planned Discord bot integration may eventually replace this GitHub-backed workflow, but the JSON remains the client feed for now.
+
+Player names can be changed, copied, or imitated. A warning means only that the visible text matched an approved alias—it does not prove the current player's identity or party.
 
 <details>
-<summary>Build from source</summary>
+<summary><strong>Build from source</strong></summary>
 
 Requirements: Windows 10 or later, the .NET 10 SDK, and the Visual C++ 2015–2022 x64 runtime.
 
@@ -57,7 +75,7 @@ dotnet run --project tests/CrossOffLobbyDodger.SelfTest/CrossOffLobbyDodger.Self
 dotnet publish src/CrossOffLobbyDodger.Client/CrossOffLobbyDodger.Client.csproj -c Release -r win-x64 --self-contained true -o publish
 ```
 
-The model downloader pins and verifies the English Tesseract model. GitHub Actions builds and tests every change.
+The model downloader pins and verifies the English Tesseract model. GitHub Actions builds, tests, and publishes a Windows artifact for every change.
 
 </details>
 
