@@ -3,7 +3,9 @@
 [![CI](https://github.com/kaankutluturk/crossoff-lobby-dodger/actions/workflows/ci.yml/badge.svg)](https://github.com/kaankutluturk/crossoff-lobby-dodger/actions/workflows/ci.yml)
 [![Latest release](https://img.shields.io/github/v/release/kaankutluturk/crossoff-lobby-dodger)](https://github.com/kaankutluturk/crossoff-lobby-dodger/releases/latest)
 
-Built by [DBD Ranked](https://discord.com/servers/dbdranked-1410340318250926182) anti-cheat staff for cross-off lobbies, with V1's endorsement. This is not Behaviour Interactive software.
+A small Windows OCR helper for [DBD Ranked](https://discord.com/servers/dbdranked-1410340318250926182) cross-off lobbies. It reads the visible lobby-name area locally, checks names against a reviewed blacklist, warns on matches, and can optionally complete the normal lobby-leave flow.
+
+Built specifically around the DBD Ranked cross-off queue. It is not official Behaviour Interactive software.
 
 **[Download the latest Windows release](https://github.com/kaankutluturk/crossoff-lobby-dodger/releases/latest)** · [View the blacklist](blacklist/blacklist.json) · [Submit evidence](https://github.com/kaankutluturk/crossoff-lobby-dodger/issues/new?template=blacklist-submission.yml)
 
