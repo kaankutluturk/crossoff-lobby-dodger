@@ -34,7 +34,7 @@ public sealed class MainForm : Form
     {
         _settings = _settingsStore.Load();
 
-        Text = "CrossOff Lobby Dodger";
+        Text = "DBD Ranked cross-off lobby dodger";
         StartPosition = FormStartPosition.CenterScreen;
         MinimumSize = new Size(720, 610);
         ClientSize = new Size(780, 650);
@@ -87,7 +87,7 @@ public sealed class MainForm : Form
     {
         var title = new Label
         {
-            Text = "CROSS OFF SWF",
+            Text = "CROSS-OFF LOBBY DODGER",
             Font = new Font(Font.FontFamily, 20, FontStyle.Bold),
             ForeColor = Color.FromArgb(120, 200, 255),
             AutoSize = true,
@@ -278,7 +278,7 @@ public sealed class MainForm : Form
         {
             MessageBox.Show(
                 "Select the lobby-name area first.",
-                "CrossOff Lobby Dodger",
+                "DBD Ranked cross-off lobby dodger",
                 MessageBoxButtons.OK,
                 MessageBoxIcon.Information);
             return;
@@ -368,7 +368,7 @@ public sealed class MainForm : Form
         {
             MessageBox.Show(
                 "Select the lobby-name area before starting.",
-                "CrossOff Lobby Dodger",
+                "DBD Ranked cross-off lobby dodger",
                 MessageBoxButtons.OK,
                 MessageBoxIcon.Information);
             return;
