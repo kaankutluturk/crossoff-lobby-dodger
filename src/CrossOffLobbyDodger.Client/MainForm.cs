@@ -463,29 +463,32 @@ public sealed class MainForm : Form
         _candidateHits = 0;
         _lastCandidateKey = null;
 
-        string actionText;
-        if (!_settings.AutoDodge)
-        {
-            actionText = "Manual mode: no key was pressed.";
-        }
-        else
-        {
-            LobbyDodgeResult result = await InputService.SendLobbyDodgeAsync();
-            actionText = result switch
-            {
-                LobbyDodgeResult.Success => "The lobby leave action was confirmed with Esc, then Enter.",
-                LobbyDodgeResult.DeadByDaylightNotForeground => "Automatic dodge skipped: Dead by Daylight was not the foreground window.",
-                LobbyDodgeResult.EscapeRejected => "Windows rejected the Escape input; dodge manually.",
-                LobbyDodgeResult.FocusLostBeforeConfirmation => "Escape was sent, but Dead by Daylight lost focus before confirmation.",
-                LobbyDodgeResult.EnterRejected => "The leave prompt opened, but Windows rejected the Enter input.",
-                _ => "Automatic dodge did not complete; dodge manually."
-            };
-        }
+        string initialActionText = _settings.AutoDodge
+            ? "Automatic mode: leaving this lobby…"
+            : "Manual mode: dodge this lobby manually.";
 
         SetStatus($"Blacklist match: {match.Alias} ({match.Entry.Group}).", StatusKind.Warning);
-        var alert = new AlertForm(match, actionText);
+        var alert = new AlertForm(match, initialActionText);
         alert.FormClosed += (_, _) => alert.Dispose();
         alert.Show();
+
+        if (!_settings.AutoDodge)
+        {
+            return;
+        }
+
+        await Task.Delay(250);
+        LobbyDodgeResult result = await InputService.SendLobbyDodgeAsync();
+        string actionText = result switch
+        {
+            LobbyDodgeResult.Success => "The lobby leave action was confirmed with Esc, then Enter.",
+            LobbyDodgeResult.DeadByDaylightNotForeground => "Automatic dodge skipped: Dead by Daylight was not the foreground window.",
+            LobbyDodgeResult.EscapeRejected => "Windows rejected the Escape input; dodge manually.",
+            LobbyDodgeResult.FocusLostBeforeConfirmation => "Escape was sent, but Dead by Daylight lost focus before confirmation.",
+            LobbyDodgeResult.EnterRejected => "The leave prompt opened, but Windows rejected the Enter input.",
+            _ => "Automatic dodge did not complete; dodge manually."
+        };
+        alert.UpdateActionText(actionText);
     }
 
     private async void BlacklistTimerTick(object? sender, EventArgs e)
