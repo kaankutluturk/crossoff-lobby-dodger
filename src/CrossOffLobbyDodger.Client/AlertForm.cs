@@ -11,7 +11,7 @@ public sealed class AlertForm : Form
 
     public AlertForm(NameMatch match, string actionText)
     {
-        Text = "CrossOff Lobby Dodger — match detected";
+        Text = "DBD Ranked cross-off lobby dodger — match detected";
         StartPosition = FormStartPosition.CenterScreen;
         FormBorderStyle = FormBorderStyle.FixedDialog;
         MaximizeBox = false;
@@ -86,7 +86,7 @@ public sealed class AlertForm : Form
         {
             MessageBox.Show(
                 $"Windows could not open the evidence link.\r\n\r\n{url}",
-                "CrossOff Lobby Dodger",
+                "DBD Ranked cross-off lobby dodger",
                 MessageBoxButtons.OK,
                 MessageBoxIcon.Warning);
         }
