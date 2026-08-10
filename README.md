@@ -1,5 +1,7 @@
 # CrossOff Lobby Dodger
 
+[![CI](https://github.com/kaankutluturk/crossoff-lobby-dodger/actions/workflows/ci.yml/badge.svg)](https://github.com/kaankutluturk/crossoff-lobby-dodger/actions/workflows/ci.yml)
+
 CrossOff Lobby Dodger is a small Windows companion that watches a user-selected part of the screen, runs OCR locally, and compares recognized lobby names with a staff-reviewed blacklist stored in this repository.
 
 When an active entry is detected twice in consecutive scans, the client:

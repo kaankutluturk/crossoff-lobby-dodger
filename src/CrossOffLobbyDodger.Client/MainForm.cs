@@ -40,7 +40,7 @@ public sealed class MainForm : Form
         ClientSize = new Size(780, 650);
         BackColor = Color.FromArgb(23, 23, 28);
         ForeColor = Color.WhiteSmoke;
-        Font = new Font(SystemFonts.MessageBoxFont.FontFamily, 9.5f);
+        Font = new Font(SystemFonts.MessageBoxFont?.FontFamily ?? FontFamily.GenericSansSerif, 9.5f);
 
         BuildInterface();
         LoadSettingsIntoInterface();
