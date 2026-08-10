@@ -3,6 +3,9 @@ name: Release
 on:
   push:
     tags: ["v*"]
+    branches: [main]
+    paths:
+      - .github/RELEASE_VERSION
 
 permissions:
   contents: write
@@ -15,6 +18,17 @@ jobs:
       - uses: actions/setup-dotnet@v4
         with:
           dotnet-version: 10.0.x
+      - name: Resolve release tag
+        id: release
+        shell: pwsh
+        run: |
+          if ($env:GITHUB_REF_TYPE -eq "tag") {
+            $tag = $env:GITHUB_REF_NAME
+          } else {
+            $tag = (Get-Content .github/RELEASE_VERSION -Raw).Trim()
+          }
+          if ($tag -notmatch '^v\d+\.\d+\.\d+$') { throw "Invalid release tag: $tag" }
+          "tag=$tag" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
       - name: Download verified OCR model
         shell: pwsh
         run: ./scripts/Get-Tessdata.ps1
@@ -33,4 +47,4 @@ jobs:
         shell: pwsh
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh release create $env:GITHUB_REF_NAME CrossOffLobbyDodger-win-x64.zip CrossOffLobbyDodger-win-x64.zip.sha256 --generate-notes --title "CrossOff Lobby Dodger $env:GITHUB_REF_NAME"
+        run: gh release create "${{ steps.release.outputs.tag }}" CrossOffLobbyDodger-win-x64.zip CrossOffLobbyDodger-win-x64.zip.sha256 --target "$env:GITHUB_SHA" --generate-notes --title "CrossOff Lobby Dodger ${{ steps.release.outputs.tag }}"

@@ -71,7 +71,7 @@ dotnet publish src/CrossOffLobbyDodger.Client/CrossOffLobbyDodger.Client.csproj 
 
 The model download script pins Tesseract's English `tessdata_fast` 4.1.0 file and verifies its SHA-256 checksum before placing it in the project.
 
-GitHub Actions builds every change. Pushing a tag such as `v0.1.0` creates a release ZIP and SHA-256 checksum.
+GitHub Actions builds every change. Pushing a `v*` tag or updating [`.github/RELEASE_VERSION`](.github/RELEASE_VERSION) creates a release ZIP and SHA-256 checksum.
 
 ## Data flow
 
