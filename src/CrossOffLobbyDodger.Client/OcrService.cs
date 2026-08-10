@@ -16,7 +16,7 @@ public sealed class OcrService : IDisposable
         if (!File.Exists(model))
         {
             throw new FileNotFoundException(
-                "OCR language data is missing. Extract the complete release ZIP before running CrossOff Lobby Dodger.",
+                "OCR language data is missing. Extract the complete release ZIP before running the lobby dodger.",
                 model);
         }
 

@@ -33,7 +33,7 @@ internal static class Program
         AssertNoMatch("ShouldNotMatch", [inactive], "inactive entry");
         AssertNoMatch("CompletelyDifferent", [active], "unrelated OCR text");
 
-        Console.WriteLine("CrossOff Lobby Dodger matcher self-tests passed.");
+        Console.WriteLine("Lobby dodger matcher self-tests passed.");
         return 0;
     }
 

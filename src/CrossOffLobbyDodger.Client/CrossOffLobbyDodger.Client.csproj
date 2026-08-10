@@ -12,7 +12,6 @@
     <AssemblyName>CrossOffLobbyDodger</AssemblyName>
     <RootNamespace>CrossOff.LobbyDodger</RootNamespace>
     <ApplicationManifest>app.manifest</ApplicationManifest>
-    <ApplicationIcon>crossoff.ico</ApplicationIcon>
   </PropertyGroup>
 
   <ItemGroup>
