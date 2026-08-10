@@ -147,21 +147,23 @@ public sealed class MainForm : Form
         blacklistGroup.Controls.AddRange([_blacklistUrl, _updateBlacklist, _blacklistLabel]);
 
         var settingsGroup = CreateGroup("3. Behavior", new Rectangle(24, 383, 732, 92));
-        _autoDodge.Text = "Automatically leave the lobby after a confirmed match";
+        _autoDodge.Text = "Auto-dodge with Esc, then Enter after a confirmed match";
         _autoDodge.AutoSize = true;
         _autoDodge.Location = new Point(17, 31);
         _autoDodge.CheckedChanged += (_, _) => SaveSettingsFromInterface();
 
         var thresholdLabel = new Label
         {
-            Text = "OCR brightness threshold:",
-            AutoSize = true,
-            Location = new Point(493, 32)
+            Text = "OCR brightness:",
+            AutoSize = false,
+            Location = new Point(492, 28),
+            Size = new Size(140, 27),
+            TextAlign = ContentAlignment.MiddleRight
         };
         _threshold.Minimum = 50;
         _threshold.Maximum = 240;
-        _threshold.Location = new Point(647, 28);
-        _threshold.Size = new Size(61, 27);
+        _threshold.Location = new Point(644, 28);
+        _threshold.Size = new Size(64, 27);
         settingsGroup.Controls.AddRange([_autoDodge, thresholdLabel, _threshold]);
 
         var previewLabel = new Label
