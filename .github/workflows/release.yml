@@ -47,4 +47,4 @@ jobs:
         shell: pwsh
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh release create "${{ steps.release.outputs.tag }}" CrossOffLobbyDodger-win-x64.zip CrossOffLobbyDodger-win-x64.zip.sha256 --target "$env:GITHUB_SHA" --generate-notes --title "CrossOff Lobby Dodger ${{ steps.release.outputs.tag }}"
+        run: gh release create "${{ steps.release.outputs.tag }}" CrossOffLobbyDodger-win-x64.zip CrossOffLobbyDodger-win-x64.zip.sha256 --target "$env:GITHUB_SHA" --generate-notes --title "DBD Ranked cross-off lobby dodger ${{ steps.release.outputs.tag }}"
