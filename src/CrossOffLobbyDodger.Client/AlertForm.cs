@@ -5,6 +5,10 @@ namespace CrossOff.LobbyDodger;
 
 public sealed class AlertForm : Form
 {
+    private readonly Label _action = new();
+
+    protected override bool ShowWithoutActivation => true;
+
     public AlertForm(NameMatch match, string actionText)
     {
         Text = "CrossOff Lobby Dodger — match detected";
@@ -36,14 +40,11 @@ public sealed class AlertForm : Form
             Size = new Size(468, 105)
         };
 
-        var action = new Label
-        {
-            Text = actionText,
-            ForeColor = Color.FromArgb(255, 210, 90),
-            AutoSize = false,
-            Location = new Point(26, 181),
-            Size = new Size(468, 35)
-        };
+        _action.Text = actionText;
+        _action.ForeColor = Color.FromArgb(255, 210, 90);
+        _action.AutoSize = false;
+        _action.Location = new Point(26, 181);
+        _action.Size = new Size(468, 35);
 
         var evidence = new LinkLabel
         {
@@ -64,7 +65,15 @@ public sealed class AlertForm : Form
         };
 
         AcceptButton = close;
-        Controls.AddRange([title, details, action, evidence, close]);
+        Controls.AddRange([title, details, _action, evidence, close]);
+    }
+
+    public void UpdateActionText(string actionText)
+    {
+        if (!IsDisposed)
+        {
+            _action.Text = actionText;
+        }
     }
 
     private static void OpenUrl(string url)

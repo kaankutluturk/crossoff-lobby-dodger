@@ -147,7 +147,7 @@ public sealed class MainForm : Form
         blacklistGroup.Controls.AddRange([_blacklistUrl, _updateBlacklist, _blacklistLabel]);
 
         var settingsGroup = CreateGroup("3. Behavior", new Rectangle(24, 383, 732, 92));
-        _autoDodge.Text = "Automatically press Esc after a confirmed match";
+        _autoDodge.Text = "Automatically leave the lobby after a confirmed match";
         _autoDodge.AutoSize = true;
         _autoDodge.Location = new Point(17, 31);
         _autoDodge.CheckedChanged += (_, _) => SaveSettingsFromInterface();
@@ -384,7 +384,7 @@ public sealed class MainForm : Form
         _startStop.BackColor = Color.FromArgb(115, 42, 48);
         SetStatus(
             _settings.AutoDodge
-                ? "Monitoring. Confirmed matches will warn and press Esc when DBD is foreground."
+                ? "Monitoring. Confirmed matches will warn and leave when DBD is foreground."
                 : "Monitoring in manual mode. Confirmed matches will warn only.",
             StatusKind.Monitoring);
         WindowState = FormWindowState.Minimized;
@@ -444,7 +444,7 @@ public sealed class MainForm : Form
                 return;
             }
 
-            TriggerMatch(match);
+            await TriggerMatchAsync(match);
         }
         catch (Exception exception) when (exception is System.ComponentModel.Win32Exception or InvalidOperationException)
         {
@@ -456,35 +456,39 @@ public sealed class MainForm : Form
         }
     }
 
-    private void TriggerMatch(NameMatch match)
+    private async Task TriggerMatchAsync(NameMatch match)
     {
         _cooldownUntil = DateTimeOffset.UtcNow.AddSeconds(
             Math.Clamp(_settings.MatchCooldownSeconds, 15, 300));
         _candidateHits = 0;
         _lastCandidateKey = null;
 
-        string actionText;
-        if (!_settings.AutoDodge)
-        {
-            actionText = "Manual mode: no key was pressed.";
-        }
-        else if (!InputService.ForegroundLooksLikeDeadByDaylight())
-        {
-            actionText = "Automatic dodge skipped: Dead by Daylight was not the foreground window.";
-        }
-        else if (InputService.SendEscape())
-        {
-            actionText = "Escape was sent to the foreground Dead by Daylight window.";
-        }
-        else
-        {
-            actionText = "Windows rejected the Escape input; dodge manually.";
-        }
+        string initialActionText = _settings.AutoDodge
+            ? "Automatic mode: leaving this lobby…"
+            : "Manual mode: dodge this lobby manually.";
 
         SetStatus($"Blacklist match: {match.Alias} ({match.Entry.Group}).", StatusKind.Warning);
-        var alert = new AlertForm(match, actionText);
+        var alert = new AlertForm(match, initialActionText);
         alert.FormClosed += (_, _) => alert.Dispose();
         alert.Show();
+
+        if (!_settings.AutoDodge)
+        {
+            return;
+        }
+
+        await Task.Delay(250);
+        LobbyDodgeResult result = await InputService.SendLobbyDodgeAsync();
+        string actionText = result switch
+        {
+            LobbyDodgeResult.Success => "The lobby leave action was confirmed with Esc, then Enter.",
+            LobbyDodgeResult.DeadByDaylightNotForeground => "Automatic dodge skipped: Dead by Daylight was not the foreground window.",
+            LobbyDodgeResult.EscapeRejected => "Windows rejected the Escape input; dodge manually.",
+            LobbyDodgeResult.FocusLostBeforeConfirmation => "Escape was sent, but Dead by Daylight lost focus before confirmation.",
+            LobbyDodgeResult.EnterRejected => "The leave prompt opened, but Windows rejected the Enter input.",
+            _ => "Automatic dodge did not complete; dodge manually."
+        };
+        alert.UpdateActionText(actionText);
     }
 
     private async void BlacklistTimerTick(object? sender, EventArgs e)

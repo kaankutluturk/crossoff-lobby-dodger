@@ -7,6 +7,7 @@ public static class InputService
 {
     private const int InputKeyboard = 1;
     private const ushort VirtualKeyEscape = 0x1B;
+    private const ushort VirtualKeyEnter = 0x0D;
     private const uint KeyEventKeyUp = 0x0002;
 
     public static bool ForegroundLooksLikeDeadByDaylight()
@@ -24,7 +25,33 @@ public static class InputService
                foregroundTitle.Contains("DeadByDaylight", StringComparison.OrdinalIgnoreCase);
     }
 
-    public static bool SendEscape()
+    public static async Task<LobbyDodgeResult> SendLobbyDodgeAsync(
+        TimeSpan? confirmationDelay = null,
+        CancellationToken cancellationToken = default)
+    {
+        if (!ForegroundLooksLikeDeadByDaylight())
+        {
+            return LobbyDodgeResult.DeadByDaylightNotForeground;
+        }
+
+        if (!SendKeyPress(VirtualKeyEscape))
+        {
+            return LobbyDodgeResult.EscapeRejected;
+        }
+
+        await Task.Delay(confirmationDelay ?? TimeSpan.FromMilliseconds(400), cancellationToken);
+
+        if (!ForegroundLooksLikeDeadByDaylight())
+        {
+            return LobbyDodgeResult.FocusLostBeforeConfirmation;
+        }
+
+        return SendKeyPress(VirtualKeyEnter)
+            ? LobbyDodgeResult.Success
+            : LobbyDodgeResult.EnterRejected;
+    }
+
+    private static bool SendKeyPress(ushort virtualKey)
     {
         Input[] inputs =
         [
@@ -35,7 +62,7 @@ public static class InputService
                 {
                     Keyboard = new KeyboardInput
                     {
-                        VirtualKey = VirtualKeyEscape
+                        VirtualKey = virtualKey
                     }
                 }
             },
@@ -46,7 +73,7 @@ public static class InputService
                 {
                     Keyboard = new KeyboardInput
                     {
-                        VirtualKey = VirtualKeyEscape,
+                        VirtualKey = virtualKey,
                         Flags = KeyEventKeyUp
                     }
                 }
@@ -113,4 +140,13 @@ public static class InputService
 
     [DllImport("user32.dll", CharSet = CharSet.Unicode)]
     private static extern int GetWindowText(IntPtr window, StringBuilder text, int maximumCount);
+}
+
+public enum LobbyDodgeResult
+{
+    Success,
+    DeadByDaylightNotForeground,
+    EscapeRejected,
+    FocusLostBeforeConfirmation,
+    EnterRejected
 }

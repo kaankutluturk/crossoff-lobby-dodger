@@ -7,7 +7,7 @@ CrossOff Lobby Dodger is a small Windows companion that watches a user-selected 
 When an active entry is detected twice in consecutive scans, the client:
 
 - shows a warning with the matched alias, group, reason, and evidence link; and
-- optionally sends one `Esc` key press to the foreground Dead by Daylight window.
+- optionally confirms the standard lobby-leave flow with `Esc`, followed by `Enter` after a short delay.
 
 Automatic dodging is enabled by default and can be disabled in the client. In manual mode the warning still appears, but the program never presses a key.
 
@@ -22,9 +22,9 @@ This design minimizes interaction with the game, but no third-party developer ca
 1. Download `CrossOffLobbyDodger-win-x64.zip` from the latest GitHub release.
 2. Extract the entire ZIP. Do not run the executable from inside the archive.
 3. Start `CrossOffLobbyDodger.exe`.
-4. Select the rectangular screen area containing the survivor names in the killer lobby.
+4. Select the rectangular screen area containing the visible lobby player names.
 5. Use **Test OCR** to confirm the names are readable.
-6. Leave **Automatically press Esc** enabled for automatic dodging, or disable it for warnings only.
+6. Leave **Automatically leave the lobby** enabled for automatic dodging, or disable it for warnings only.
 7. Press **Start monitoring** and return to Dead by Daylight.
 
 Borderless or windowed display mode is recommended because ordinary screen capture may return a black image for some exclusive-fullscreen configurations.
@@ -82,7 +82,7 @@ flowchart LR
     B --> E["Alias matcher"]
     D --> E
     E --> F["Warning"]
-    E --> G["Optional Esc"]
+    E --> G["Optional Esc + Enter"]
 ```
 
 ## Moderation
