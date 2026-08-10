@@ -1,0 +1,54 @@
+name: Blacklist submission
+description: Propose an evidence-backed alias for staff review
+title: "[Blacklist] "
+labels: ["blacklist-submission"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Submissions are proposals, not automatic additions. Staff review the evidence before changing the live list. Do not post real-world personal information.
+  - type: input
+    id: alias
+    attributes:
+      label: Exact visible player name
+      description: Preserve capitalization, spacing, and symbols as shown in the lobby.
+      placeholder: PlayerName
+    validations:
+      required: true
+  - type: input
+    id: group
+    attributes:
+      label: Associated SWF/group
+      placeholder: Group name
+    validations:
+      required: true
+  - type: textarea
+    id: reason
+    attributes:
+      label: Reason
+      description: Keep this factual and concise. This text may be displayed by the client.
+    validations:
+      required: true
+  - type: input
+    id: evidence
+    attributes:
+      label: Evidence link
+      description: Link a durable screenshot/video or attach it below.
+    validations:
+      required: true
+  - type: input
+    id: date
+    attributes:
+      label: Match/evidence date
+      placeholder: YYYY-MM-DD
+    validations:
+      required: true
+  - type: checkboxes
+    id: confirmations
+    attributes:
+      label: Confirmation
+      options:
+        - label: The evidence visibly supports the submitted alias and reason.
+          required: true
+        - label: I removed real-world personal information and understand staff may reject the submission.
+          required: true

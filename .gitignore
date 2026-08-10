@@ -1,0 +1,14 @@
+bin/
+obj/
+publish/
+TestResults/
+.vs/
+*.user
+*.suo
+*.nupkg
+*.snupkg
+CrossOffLobbyDodger-win-x64.zip
+CrossOffLobbyDodger-win-x64.zip.sha256
+CrossOff-source.zip
+upload/
+src/CrossOffLobbyDodger.Client/tessdata/*.traineddata

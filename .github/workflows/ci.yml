@@ -1,0 +1,49 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+      - name: Download verified OCR model
+        shell: pwsh
+        run: ./scripts/Get-Tessdata.ps1
+      - name: Restore
+        run: dotnet restore CrossOffLobbyDodger.sln
+      - name: Build
+        run: dotnet build CrossOffLobbyDodger.sln -c Release --no-restore
+      - name: Run matcher self-tests
+        run: dotnet run --project tests/CrossOffLobbyDodger.SelfTest/CrossOffLobbyDodger.SelfTest.csproj -c Release --no-build
+      - name: Validate blacklist JSON
+        shell: pwsh
+        run: |
+          $list = Get-Content blacklist/blacklist.json -Raw | ConvertFrom-Json
+          if ($list.schemaVersion -ne 1) { throw "Unsupported blacklist schema" }
+          $ids = @($list.entries | ForEach-Object { $_.id })
+          if (($ids | Sort-Object -Unique).Count -ne $ids.Count) { throw "Duplicate blacklist IDs" }
+          foreach ($entry in $list.entries) {
+            if (-not $entry.id -or -not $entry.group -or -not $entry.aliases -or -not $entry.reason -or -not $entry.evidenceUrl) {
+              throw "Incomplete blacklist entry: $($entry.id)"
+            }
+          }
+      - name: Publish Windows x64 artifact
+        if: github.event_name == 'push'
+        run: dotnet publish src/CrossOffLobbyDodger.Client/CrossOffLobbyDodger.Client.csproj -c Release -r win-x64 --self-contained true -o publish
+      - name: Upload Windows build
+        if: github.event_name == 'push'
+        uses: actions/upload-artifact@v4
+        with:
+          name: CrossOffLobbyDodger-win-x64
+          path: publish/
+          if-no-files-found: error

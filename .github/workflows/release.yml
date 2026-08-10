@@ -1,0 +1,36 @@
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+      - name: Download verified OCR model
+        shell: pwsh
+        run: ./scripts/Get-Tessdata.ps1
+      - name: Restore
+        run: dotnet restore CrossOffLobbyDodger.sln
+      - name: Test
+        run: dotnet run --project tests/CrossOffLobbyDodger.SelfTest/CrossOffLobbyDodger.SelfTest.csproj -c Release
+      - name: Publish Windows x64
+        run: dotnet publish src/CrossOffLobbyDodger.Client/CrossOffLobbyDodger.Client.csproj -c Release -r win-x64 --self-contained true -o publish
+      - name: Package and checksum
+        shell: pwsh
+        run: |
+          Compress-Archive -Path publish/* -DestinationPath CrossOffLobbyDodger-win-x64.zip
+          (Get-FileHash CrossOffLobbyDodger-win-x64.zip -Algorithm SHA256).Hash.ToLowerInvariant() + "  CrossOffLobbyDodger-win-x64.zip" | Set-Content CrossOffLobbyDodger-win-x64.zip.sha256
+      - name: Create GitHub release
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release create $env:GITHUB_REF_NAME CrossOffLobbyDodger-win-x64.zip CrossOffLobbyDodger-win-x64.zip.sha256 --generate-notes --title "CrossOff Lobby Dodger $env:GITHUB_REF_NAME"

@@ -1,0 +1,24 @@
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31903.59
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CrossOffLobbyDodger.Client", "src\CrossOffLobbyDodger.Client\CrossOffLobbyDodger.Client.csproj", "{BCFA53DD-C282-4988-9FC5-83DB58F1E976}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CrossOffLobbyDodger.SelfTest", "tests\CrossOffLobbyDodger.SelfTest\CrossOffLobbyDodger.SelfTest.csproj", "{03425BD3-E9B2-4A49-8523-AB46A2A24677}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{BCFA53DD-C282-4988-9FC5-83DB58F1E976}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{BCFA53DD-C282-4988-9FC5-83DB58F1E976}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{BCFA53DD-C282-4988-9FC5-83DB58F1E976}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{BCFA53DD-C282-4988-9FC5-83DB58F1E976}.Release|Any CPU.Build.0 = Release|Any CPU
+		{03425BD3-E9B2-4A49-8523-AB46A2A24677}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{03425BD3-E9B2-4A49-8523-AB46A2A24677}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{03425BD3-E9B2-4A49-8523-AB46A2A24677}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{03425BD3-E9B2-4A49-8523-AB46A2A24677}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal

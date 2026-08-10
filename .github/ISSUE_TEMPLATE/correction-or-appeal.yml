@@ -1,0 +1,23 @@
+name: Correction or appeal
+description: Report a mistaken alias, outdated entry, or unsupported record
+title: "[Correction] "
+labels: ["correction"]
+body:
+  - type: input
+    id: entry
+    attributes:
+      label: Entry ID or alias
+    validations:
+      required: true
+  - type: textarea
+    id: correction
+    attributes:
+      label: What should be corrected?
+    validations:
+      required: true
+  - type: input
+    id: evidence
+    attributes:
+      label: Supporting evidence link
+    validations:
+      required: false
