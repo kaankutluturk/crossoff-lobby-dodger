@@ -3,11 +3,7 @@
 [![CI](https://github.com/kaankutluturk/crossoff-lobby-dodger/actions/workflows/ci.yml/badge.svg)](https://github.com/kaankutluturk/crossoff-lobby-dodger/actions/workflows/ci.yml)
 [![Latest release](https://img.shields.io/github/v/release/kaankutluturk/crossoff-lobby-dodger)](https://github.com/kaankutluturk/crossoff-lobby-dodger/releases/latest)
 
-A small Windows OCR helper made specifically for [DBD Ranked](https://discord.com/servers/dbdranked-1410340318250926182) cross-off lobbies.
-
-In this repository, **cross-off** means the DBD Ranked queue format: killers and SWFs deliberately enter the same public matchmaking pool, try to find one another, and record the results on a leaderboard. It is not the name of this application.
-
-This is an independent community utility for that format. It is not an official DBD Ranked or Behaviour Interactive client.
+Built by [DBD Ranked](https://discord.com/servers/dbdranked-1410340318250926182) anti-cheat staff for cross-off lobbies, with V1's endorsement. This is not Behaviour Interactive software.
 
 **[Download the latest Windows release](https://github.com/kaankutluturk/crossoff-lobby-dodger/releases/latest)** · [View the blacklist](blacklist/blacklist.json) · [Submit evidence](https://github.com/kaankutluturk/crossoff-lobby-dodger/issues/new?template=blacklist-submission.yml)
 
@@ -36,7 +32,7 @@ Borderless or windowed mode is recommended. Exclusive fullscreen can prevent ord
 
 The current backend is [`blacklist/blacklist.json`](blacklist/blacklist.json). It starts empty intentionally. Only reviewed entries marked `active` are matched.
 
-Blacklist submissions should include photo or video evidence. A maintainer reviews the evidence before the live list changes; direct unreviewed additions should not be merged. The planned Discord bot will handle submissions and staff approval while keeping this public file as the client feed.
+Blacklist submissions should include photo or video evidence. A maintainer reviews the evidence before the live list changes; direct unreviewed additions should not be merged. The planned Discord bot integration may eventually replace this GitHub-backed workflow; the JSON stays for now.
 
 Player names can be changed, copied, or imitated. A warning means the visible text matched an approved alias—it does not prove that the current player owns the original account or is grouped with anyone else.
 
