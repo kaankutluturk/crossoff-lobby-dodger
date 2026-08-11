@@ -4,22 +4,28 @@ namespace CrossOff.LobbyDodger;
 
 public sealed class MainForm : Form
 {
+    private const int RequiredConsecutiveMatches = 2;
+
     private readonly SettingsStore _settingsStore = new();
     private readonly BlacklistService _blacklistService = new();
     private readonly System.Windows.Forms.Timer _monitorTimer = new();
     private readonly System.Windows.Forms.Timer _blacklistTimer = new();
 
     private readonly Label _statusLabel = new();
+    private readonly Label _statusPill = new();
     private readonly Label _regionLabel = new();
     private readonly Label _blacklistLabel = new();
-    private readonly TextBox _blacklistUrl = new();
     private readonly TextBox _ocrPreview = new();
-    private readonly CheckBox _autoDodge = new();
-    private readonly NumericUpDown _threshold = new();
+    private readonly RadioButton _warnOnly = new();
+    private readonly RadioButton _warnAndDodge = new();
+    private readonly Label _behaviorSequence = new();
     private readonly Button _selectRegion = new();
     private readonly Button _testOcr = new();
     private readonly Button _updateBlacklist = new();
     private readonly Button _startStop = new();
+    private readonly TableLayoutPanel _setupView = new();
+    private readonly TableLayoutPanel _monitoringView = new();
+    private readonly Label _monitoringLastScan = new();
 
     private AppSettings _settings;
     private OcrService? _ocrService;
@@ -36,11 +42,21 @@ public sealed class MainForm : Form
 
         Text = "DBD Ranked cross-off lobby dodger";
         StartPosition = FormStartPosition.CenterScreen;
-        MinimumSize = new Size(720, 610);
-        ClientSize = new Size(780, 650);
-        BackColor = Color.FromArgb(23, 23, 28);
-        ForeColor = Color.WhiteSmoke;
-        Font = new Font(SystemFonts.MessageBoxFont?.FontFamily ?? FontFamily.GenericSansSerif, 9.5f);
+        MinimumSize = new Size(760, 610);
+        ClientSize = new Size(800, 650);
+        BackColor = AppTheme.Background;
+        ForeColor = AppTheme.Text;
+        Font = AppTheme.UiFont();
+        AutoScaleMode = AutoScaleMode.Dpi;
+
+        try
+        {
+            Icon = System.Drawing.Icon.ExtractAssociatedIcon(Application.ExecutablePath);
+        }
+        catch (ArgumentException)
+        {
+            // The project icon is still supplied through the application manifest.
+        }
 
         BuildInterface();
         LoadSettingsIntoInterface();
@@ -85,158 +101,426 @@ public sealed class MainForm : Form
 
     private void BuildInterface()
     {
-        var title = new Label
+        Padding = new Padding(24, 20, 24, 18);
+
+        var root = new TableLayoutPanel
         {
-            Text = "CROSS-OFF LOBBY DODGER",
-            Font = new Font(Font.FontFamily, 20, FontStyle.Bold),
-            ForeColor = Color.FromArgb(120, 200, 255),
+            Dock = DockStyle.Fill,
+            ColumnCount = 1,
+            RowCount = 4,
+            BackColor = AppTheme.Background,
+            Margin = new Padding(0),
+            Padding = new Padding(0)
+        };
+        root.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+        root.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+        root.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
+        root.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+
+        root.Controls.Add(BuildHeader(), 0, 0);
+
+        _statusLabel.AutoSize = true;
+        _statusLabel.ForeColor = AppTheme.MutedText;
+        _statusLabel.Margin = new Padding(1, 13, 0, 15);
+        root.Controls.Add(_statusLabel, 0, 1);
+
+        var contentHost = new Panel
+        {
+            Dock = DockStyle.Fill,
+            BackColor = AppTheme.Background,
+            Margin = new Padding(0)
+        };
+        BuildSetupView();
+        BuildMonitoringView();
+        contentHost.Controls.Add(_monitoringView);
+        contentHost.Controls.Add(_setupView);
+        _setupView.BringToFront();
+        root.Controls.Add(contentHost, 0, 2);
+
+        root.Controls.Add(BuildFooter(), 0, 3);
+        Controls.Add(root);
+    }
+
+    private Control BuildHeader()
+    {
+        var header = new TableLayoutPanel
+        {
+            Dock = DockStyle.Top,
             AutoSize = true,
-            Location = new Point(24, 20)
+            ColumnCount = 2,
+            RowCount = 1,
+            Margin = new Padding(0),
+            BackColor = AppTheme.Background
+        };
+        header.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
+        header.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
+
+        var brand = new FlowLayoutPanel
+        {
+            AutoSize = true,
+            WrapContents = false,
+            FlowDirection = FlowDirection.LeftToRight,
+            Margin = new Padding(0),
+            BackColor = AppTheme.Background
         };
 
-        var subtitle = new Label
+        if (Icon is not null)
         {
-            Text = "Local screen OCR • GitHub blacklist • optional automatic dodge",
+            brand.Controls.Add(new PictureBox
+            {
+                Image = Icon.ToBitmap(),
+                SizeMode = PictureBoxSizeMode.Zoom,
+                Size = new Size(48, 48),
+                Margin = new Padding(0, 0, 13, 0)
+            });
+        }
+
+        var copy = new TableLayoutPanel
+        {
             AutoSize = true,
-            ForeColor = Color.Silver,
-            Location = new Point(27, 59)
+            ColumnCount = 1,
+            RowCount = 2,
+            Margin = new Padding(0),
+            BackColor = AppTheme.Background
         };
+        copy.Controls.Add(new Label
+        {
+            Text = "LOBBY DODGER",
+            AutoSize = true,
+            Font = AppTheme.UiFont(18, FontStyle.Bold),
+            ForeColor = AppTheme.Text,
+            Margin = new Padding(0, 1, 0, 1)
+        });
+        copy.Controls.Add(new Label
+        {
+            Text = "Local OCR for DBD Ranked cross-off lobbies",
+            AutoSize = true,
+            ForeColor = AppTheme.MutedText,
+            Margin = new Padding(0)
+        });
+        brand.Controls.Add(copy);
 
-        _statusLabel.AutoSize = false;
-        _statusLabel.Location = new Point(27, 91);
-        _statusLabel.Size = new Size(720, 42);
-        _statusLabel.ForeColor = Color.Gainsboro;
+        _statusPill.AutoSize = true;
+        _statusPill.Text = "●  Ready";
+        _statusPill.TextAlign = ContentAlignment.MiddleCenter;
+        _statusPill.ForeColor = AppTheme.Emerald;
+        _statusPill.BackColor = AppTheme.EmeraldSurface;
+        _statusPill.Padding = new Padding(10, 6, 10, 6);
+        _statusPill.Margin = new Padding(12, 8, 0, 0);
 
-        var regionGroup = CreateGroup("1. Capture area", new Rectangle(24, 137, 732, 106));
-        _regionLabel.Location = new Point(16, 27);
-        _regionLabel.Size = new Size(470, 28);
-        _regionLabel.TextAlign = ContentAlignment.MiddleLeft;
+        header.Controls.Add(brand, 0, 0);
+        header.Controls.Add(_statusPill, 1, 0);
+        return header;
+    }
 
-        _selectRegion.Text = "Select area";
-        _selectRegion.Location = new Point(504, 25);
-        _selectRegion.Size = new Size(100, 31);
+    private void BuildSetupView()
+    {
+        _setupView.Dock = DockStyle.Fill;
+        _setupView.AutoScroll = true;
+        _setupView.ColumnCount = 1;
+        _setupView.RowCount = 4;
+        _setupView.Margin = new Padding(0);
+        _setupView.BackColor = AppTheme.Background;
+        _setupView.RowStyles.Add(new RowStyle(SizeType.Absolute, 94));
+        _setupView.RowStyles.Add(new RowStyle(SizeType.Absolute, 84));
+        _setupView.RowStyles.Add(new RowStyle(SizeType.Absolute, 150));
+        _setupView.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
+
+        _setupView.Controls.Add(BuildCaptureCard(), 0, 0);
+        _setupView.Controls.Add(BuildBlacklistCard(), 0, 1);
+        _setupView.Controls.Add(BuildBehaviorCard(), 0, 2);
+        _setupView.Controls.Add(BuildOcrPreviewCard(), 0, 3);
+    }
+
+    private Control BuildCaptureCard()
+    {
+        var card = CreateCard(new Padding(15, 13, 15, 13), new Padding(0, 0, 0, 10));
+        var layout = CreateTwoColumnLayout();
+
+        var copy = CreateCopyBlock("Lobby-name area", _regionLabel);
+        _regionLabel.AutoSize = true;
+        _regionLabel.ForeColor = AppTheme.MutedText;
+        _regionLabel.Margin = new Padding(0, 5, 0, 0);
+
+        var actions = new FlowLayoutPanel
+        {
+            AutoSize = true,
+            WrapContents = false,
+            FlowDirection = FlowDirection.LeftToRight,
+            Anchor = AnchorStyles.Right,
+            Margin = new Padding(0),
+            BackColor = AppTheme.Surface
+        };
+        _selectRegion.Text = "Change area";
+        _selectRegion.Size = new Size(112, 34);
+        _selectRegion.Margin = new Padding(0, 0, 8, 0);
+        AppTheme.StyleButton(_selectRegion, glyph: AppGlyph.SelectArea);
         _selectRegion.Click += SelectRegionClick;
 
         _testOcr.Text = "Test OCR";
-        _testOcr.Location = new Point(612, 25);
-        _testOcr.Size = new Size(96, 31);
+        _testOcr.Size = new Size(96, 34);
+        _testOcr.Margin = new Padding(0);
+        AppTheme.StyleButton(_testOcr, glyph: AppGlyph.Ocr);
         _testOcr.Click += TestOcrClick;
 
-        var regionHelp = new Label
-        {
-            Text = "Draw tightly around the survivor/player names. Exclude icons and unrelated UI where possible.",
-            ForeColor = Color.Silver,
-            AutoSize = true,
-            Location = new Point(17, 64)
-        };
-        regionGroup.Controls.AddRange([_regionLabel, _selectRegion, _testOcr, regionHelp]);
+        actions.Controls.AddRange([_selectRegion, _testOcr]);
+        layout.Controls.Add(copy, 0, 0);
+        layout.Controls.Add(actions, 1, 0);
+        card.Controls.Add(layout);
+        return card;
+    }
 
-        var blacklistGroup = CreateGroup("2. GitHub blacklist", new Rectangle(24, 254, 732, 118));
-        _blacklistUrl.Location = new Point(16, 27);
-        _blacklistUrl.Size = new Size(585, 27);
-        _blacklistUrl.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
+    private Control BuildBlacklistCard()
+    {
+        var card = CreateCard(new Padding(15, 12, 15, 12), new Padding(0, 0, 0, 10));
+        var layout = CreateTwoColumnLayout();
 
-        _updateBlacklist.Text = "Update";
-        _updateBlacklist.Location = new Point(612, 25);
-        _updateBlacklist.Size = new Size(96, 31);
+        _blacklistLabel.AutoSize = true;
+        _blacklistLabel.ForeColor = AppTheme.MutedText;
+        _blacklistLabel.Margin = new Padding(0, 5, 0, 0);
+        var copy = CreateCopyBlock("Reviewed blacklist", _blacklistLabel);
+
+        _updateBlacklist.Text = "Refresh";
+        _updateBlacklist.Size = new Size(96, 34);
+        _updateBlacklist.Anchor = AnchorStyles.Right;
+        _updateBlacklist.Margin = new Padding(0);
+        AppTheme.StyleButton(_updateBlacklist, glyph: AppGlyph.Refresh);
         _updateBlacklist.Click += async (_, _) => await RefreshBlacklistAsync();
 
-        _blacklistLabel.Location = new Point(17, 65);
-        _blacklistLabel.Size = new Size(691, 32);
-        _blacklistLabel.ForeColor = Color.Silver;
-        blacklistGroup.Controls.AddRange([_blacklistUrl, _updateBlacklist, _blacklistLabel]);
+        layout.Controls.Add(copy, 0, 0);
+        layout.Controls.Add(_updateBlacklist, 1, 0);
+        card.Controls.Add(layout);
+        return card;
+    }
 
-        var settingsGroup = CreateGroup("3. Behavior", new Rectangle(24, 383, 732, 92));
-        _autoDodge.Text = "Auto-dodge with Esc, then Enter after a confirmed match";
-        _autoDodge.AutoSize = true;
-        _autoDodge.Location = new Point(17, 31);
-        _autoDodge.CheckedChanged += (_, _) => SaveSettingsFromInterface();
-
-        var thresholdLabel = new Label
+    private Control BuildBehaviorCard()
+    {
+        var card = CreateCard(new Padding(15, 11, 15, 11), new Padding(0, 0, 0, 10));
+        var layout = new TableLayoutPanel
         {
-            Text = "OCR brightness:",
-            AutoSize = false,
-            Location = new Point(492, 28),
-            Size = new Size(140, 27),
-            TextAlign = ContentAlignment.MiddleRight
+            Dock = DockStyle.Fill,
+            ColumnCount = 2,
+            RowCount = 3,
+            Margin = new Padding(0),
+            BackColor = AppTheme.Surface
         };
-        _threshold.Minimum = 50;
-        _threshold.Maximum = 240;
-        _threshold.Location = new Point(644, 28);
-        _threshold.Size = new Size(64, 27);
-        settingsGroup.Controls.AddRange([_autoDodge, thresholdLabel, _threshold]);
+        layout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50));
+        layout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50));
+        layout.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+        layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 62));
+        layout.RowStyles.Add(new RowStyle(SizeType.AutoSize));
 
-        var previewLabel = new Label
+        var title = CreateSectionTitle("When a match is confirmed");
+        title.Margin = new Padding(0, 0, 0, 7);
+        layout.SetColumnSpan(title, 2);
+        layout.Controls.Add(title, 0, 0);
+
+        _warnOnly.Text = "Warn only\r\nYou leave the lobby manually";
+        _warnOnly.Dock = DockStyle.Fill;
+        _warnOnly.Margin = new Padding(0, 0, 5, 0);
+        AppTheme.StyleModeOption(_warnOnly);
+        _warnOnly.CheckedChanged += BehaviorModeChanged;
+
+        _warnAndDodge.Text = "Warn and dodge\r\nCancel during the alert countdown";
+        _warnAndDodge.Dock = DockStyle.Fill;
+        _warnAndDodge.Margin = new Padding(5, 0, 0, 0);
+        AppTheme.StyleModeOption(_warnAndDodge);
+        _warnAndDodge.CheckedChanged += BehaviorModeChanged;
+
+        _behaviorSequence.AutoSize = true;
+        _behaviorSequence.ForeColor = AppTheme.MutedText;
+        _behaviorSequence.Margin = new Padding(1, 8, 0, 0);
+        layout.SetColumnSpan(_behaviorSequence, 2);
+
+        layout.Controls.Add(_warnOnly, 0, 1);
+        layout.Controls.Add(_warnAndDodge, 1, 1);
+        layout.Controls.Add(_behaviorSequence, 0, 2);
+        card.Controls.Add(layout);
+        return card;
+    }
+
+    private Control BuildOcrPreviewCard()
+    {
+        var card = CreateCard(new Padding(15, 10, 15, 10), new Padding(0));
+        var layout = new TableLayoutPanel
         {
-            Text = "Last OCR preview (not saved):",
-            AutoSize = true,
-            Location = new Point(27, 490),
-            ForeColor = Color.Silver
+            Dock = DockStyle.Fill,
+            ColumnCount = 1,
+            RowCount = 2,
+            Margin = new Padding(0),
+            BackColor = AppTheme.Surface
         };
+        layout.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+        layout.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
 
-        _ocrPreview.Location = new Point(27, 515);
-        _ocrPreview.Size = new Size(729, 75);
+        var title = CreateSectionTitle("Last OCR result");
+        title.Margin = new Padding(0, 0, 0, 6);
+
+        _ocrPreview.Dock = DockStyle.Fill;
         _ocrPreview.Multiline = true;
         _ocrPreview.ReadOnly = true;
         _ocrPreview.ScrollBars = ScrollBars.Vertical;
-        _ocrPreview.BackColor = Color.FromArgb(14, 14, 17);
-        _ocrPreview.ForeColor = Color.Gainsboro;
+        _ocrPreview.BackColor = AppTheme.Background;
+        _ocrPreview.ForeColor = AppTheme.MutedText;
         _ocrPreview.BorderStyle = BorderStyle.FixedSingle;
+        _ocrPreview.Text = "No OCR test has been run yet.";
+        _ocrPreview.Margin = new Padding(0);
 
-        _startStop.Text = "Start monitoring";
-        _startStop.Font = new Font(Font.FontFamily, 11, FontStyle.Bold);
-        _startStop.Location = new Point(552, 603);
-        _startStop.Size = new Size(204, 38);
-        _startStop.Anchor = AnchorStyles.Bottom | AnchorStyles.Right;
-        _startStop.Click += StartStopClick;
-
-        var localOnly = new Label
-        {
-            Text = "No screenshots or recognized names are uploaded.",
-            AutoSize = true,
-            ForeColor = Color.FromArgb(130, 210, 150),
-            Location = new Point(27, 614),
-            Anchor = AnchorStyles.Bottom | AnchorStyles.Left
-        };
-
-        Controls.AddRange([
-            title,
-            subtitle,
-            _statusLabel,
-            regionGroup,
-            blacklistGroup,
-            settingsGroup,
-            previewLabel,
-            _ocrPreview,
-            _startStop,
-            localOnly
-        ]);
+        layout.Controls.Add(title, 0, 0);
+        layout.Controls.Add(_ocrPreview, 0, 1);
+        card.Controls.Add(layout);
+        return card;
     }
 
-    private static GroupBox CreateGroup(string text, Rectangle bounds)
+    private void BuildMonitoringView()
     {
-        return new GroupBox
+        _monitoringView.Dock = DockStyle.Fill;
+        _monitoringView.Visible = false;
+        _monitoringView.ColumnCount = 1;
+        _monitoringView.RowCount = 5;
+        _monitoringView.Margin = new Padding(0);
+        _monitoringView.BackColor = AppTheme.Background;
+        _monitoringView.RowStyles.Add(new RowStyle(SizeType.Percent, 50));
+        _monitoringView.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+        _monitoringView.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+        _monitoringView.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+        _monitoringView.RowStyles.Add(new RowStyle(SizeType.Percent, 50));
+
+        var monitorMark = new PictureBox
+        {
+            Image = AppGlyphs.Create(AppGlyph.Ocr, AppTheme.Emerald, 42),
+            SizeMode = PictureBoxSizeMode.CenterImage,
+            Size = new Size(58, 58),
+            Anchor = AnchorStyles.None,
+            Margin = new Padding(0, 0, 0, 8)
+        };
+        var title = new Label
+        {
+            Text = "Watching the lobby-name area",
+            AutoSize = true,
+            Font = AppTheme.UiFont(14, FontStyle.Bold),
+            ForeColor = AppTheme.Text,
+            Anchor = AnchorStyles.None,
+            Margin = new Padding(0, 0, 0, 5)
+        };
+        var subtitle = new Label
+        {
+            Text = "Keep Dead by Daylight visible while players join.",
+            AutoSize = true,
+            ForeColor = AppTheme.MutedText,
+            Anchor = AnchorStyles.None,
+            Margin = new Padding(0, 0, 0, 16)
+        };
+        _monitoringLastScan.AutoSize = true;
+        _monitoringLastScan.ForeColor = AppTheme.MutedText;
+        _monitoringLastScan.Anchor = AnchorStyles.None;
+        _monitoringLastScan.Text = "Waiting for the next scan…";
+
+        _monitoringView.Controls.Add(monitorMark, 0, 1);
+        _monitoringView.Controls.Add(title, 0, 2);
+        _monitoringView.Controls.Add(subtitle, 0, 3);
+        _monitoringView.Controls.Add(_monitoringLastScan, 0, 4);
+    }
+
+    private Control BuildFooter()
+    {
+        var footer = new TableLayoutPanel
+        {
+            Dock = DockStyle.Bottom,
+            AutoSize = true,
+            ColumnCount = 2,
+            RowCount = 1,
+            Margin = new Padding(0, 15, 0, 0),
+            BackColor = AppTheme.Background
+        };
+        footer.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
+        footer.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
+
+        footer.Controls.Add(new Label
+        {
+            Text = "Screen-only  •  nothing uploaded",
+            AutoSize = true,
+            ForeColor = AppTheme.MutedText,
+            Anchor = AnchorStyles.Left,
+            Margin = new Padding(0)
+        }, 0, 0);
+
+        _startStop.Text = "Start monitoring";
+        _startStop.Font = AppTheme.UiFont(10, FontStyle.Bold);
+        _startStop.Size = new Size(180, 38);
+        _startStop.Margin = new Padding(0);
+        AppTheme.StyleButton(_startStop, primary: true, glyph: AppGlyph.Play);
+        _startStop.Click += StartStopClick;
+        footer.Controls.Add(_startStop, 1, 0);
+        return footer;
+    }
+
+    private static Panel CreateCard(Padding padding, Padding margin)
+    {
+        return new Panel
+        {
+            Dock = DockStyle.Fill,
+            Padding = padding,
+            Margin = margin,
+            BackColor = AppTheme.Surface,
+            BorderStyle = BorderStyle.FixedSingle
+        };
+    }
+
+    private static TableLayoutPanel CreateTwoColumnLayout()
+    {
+        var layout = new TableLayoutPanel
+        {
+            Dock = DockStyle.Fill,
+            ColumnCount = 2,
+            RowCount = 1,
+            Margin = new Padding(0),
+            BackColor = AppTheme.Surface
+        };
+        layout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
+        layout.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
+        return layout;
+    }
+
+    private static TableLayoutPanel CreateCopyBlock(string title, Control detail)
+    {
+        var copy = new TableLayoutPanel
+        {
+            AutoSize = true,
+            ColumnCount = 1,
+            RowCount = 2,
+            Anchor = AnchorStyles.Left,
+            Margin = new Padding(0),
+            BackColor = AppTheme.Surface
+        };
+        copy.Controls.Add(CreateSectionTitle(title), 0, 0);
+        copy.Controls.Add(detail, 0, 1);
+        return copy;
+    }
+
+    private static Label CreateSectionTitle(string text)
+    {
+        return new Label
         {
             Text = text,
-            Bounds = bounds,
-            ForeColor = Color.Gainsboro,
-            Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right
+            AutoSize = true,
+            Font = AppTheme.UiFont(10, FontStyle.Bold),
+            ForeColor = AppTheme.Text,
+            Margin = new Padding(0)
         };
     }
 
     private void LoadSettingsIntoInterface()
     {
-        _blacklistUrl.Text = _settings.BlacklistUrl;
-        _autoDodge.Checked = _settings.AutoDodge;
-        _threshold.Value = Math.Clamp(_settings.OcrThreshold, (int)_threshold.Minimum, (int)_threshold.Maximum);
+        _warnOnly.Checked = !_settings.AutoDodge;
+        _warnAndDodge.Checked = _settings.AutoDodge;
+        UpdateBehaviorModeAppearance();
         UpdateRegionLabel();
     }
 
     private void SaveSettingsFromInterface()
     {
-        _settings.BlacklistUrl = _blacklistUrl.Text.Trim();
-        _settings.AutoDodge = _autoDodge.Checked;
-        _settings.OcrThreshold = (int)_threshold.Value;
+        _settings.AutoDodge = _warnAndDodge.Checked;
 
         try
         {
@@ -246,6 +530,24 @@ public sealed class MainForm : Form
         {
             SetStatus($"Could not save settings: {exception.Message}", StatusKind.Error);
         }
+    }
+
+    private void BehaviorModeChanged(object? sender, EventArgs e)
+    {
+        if (sender is RadioButton option && option.Checked)
+        {
+            UpdateBehaviorModeAppearance();
+            SaveSettingsFromInterface();
+        }
+    }
+
+    private void UpdateBehaviorModeAppearance()
+    {
+        AppTheme.RefreshModeOption(_warnOnly);
+        AppTheme.RefreshModeOption(_warnAndDodge);
+        _behaviorSequence.Text = _warnAndDodge.Checked
+            ? "Alert shown  •  3-second countdown  •  Esc  •  Enter"
+            : "Alert shown  •  you leave the lobby manually";
     }
 
     private void SelectRegionClick(object? sender, EventArgs e)
@@ -298,7 +600,7 @@ public sealed class MainForm : Form
         try
         {
             using Bitmap screenshot = ScreenCapture.Capture(_settings.CaptureRegion);
-            OcrScan scan = await _ocrService.RecognizeAsync(screenshot, _settings.OcrThreshold);
+            OcrScan scan = await _ocrService.RecognizeAsync(screenshot);
             _ocrPreview.Text = string.IsNullOrWhiteSpace(scan.Text) ? "(No text recognized)" : scan.Text;
             NameMatch? match = NameMatcher.FindMatch(scan.Text, _blacklistService.Current.Entries);
             string matchText = match is null ? "no blacklist match" : $"matched {match.Alias}";
@@ -332,7 +634,7 @@ public sealed class MainForm : Form
             BlacklistUpdateResult result = await _blacklistService.RefreshAsync(_settings.BlacklistUrl);
             int active = result.Document.Entries.Count(static entry => entry.Active);
             string source = result.UsedCache ? "cached copy" : "GitHub";
-            _blacklistLabel.Text = $"{active} active entries • updated {result.Document.UpdatedAt:u} • {source}";
+            _blacklistLabel.Text = $"●  {active} active entries  •  {source}  •  updated {result.Document.UpdatedAt:u}";
 
             if (result.Error is not null)
             {
@@ -383,13 +685,15 @@ public sealed class MainForm : Form
         _monitorTimer.Interval = Math.Clamp(_settings.ScanIntervalMs, 500, 10_000);
         _monitorTimer.Start();
         _startStop.Text = "Stop monitoring";
-        _startStop.BackColor = Color.FromArgb(115, 42, 48);
+        AppTheme.StyleButton(_startStop, glyph: AppGlyph.Stop);
+        _setupView.Visible = false;
+        _monitoringView.Visible = true;
+        _monitoringView.BringToFront();
         SetStatus(
             _settings.AutoDodge
-                ? "Monitoring. Confirmed matches will warn and leave when DBD is foreground."
+                ? "Monitoring. Confirmed matches will warn before the lobby is left."
                 : "Monitoring in manual mode. Confirmed matches will warn only.",
             StatusKind.Monitoring);
-        WindowState = FormWindowState.Minimized;
     }
 
     private void StopMonitoring()
@@ -399,7 +703,10 @@ public sealed class MainForm : Form
         _candidateHits = 0;
         _lastCandidateKey = null;
         _startStop.Text = "Start monitoring";
-        _startStop.UseVisualStyleBackColor = true;
+        AppTheme.StyleButton(_startStop, primary: true, glyph: AppGlyph.Play);
+        _monitoringView.Visible = false;
+        _setupView.Visible = true;
+        _setupView.BringToFront();
         if (!IsDisposed)
         {
             SetStatus("Monitoring stopped.", StatusKind.Ready);
@@ -418,8 +725,10 @@ public sealed class MainForm : Form
         try
         {
             using Bitmap screenshot = ScreenCapture.Capture(_settings.CaptureRegion);
-            OcrScan scan = await _ocrService.RecognizeAsync(screenshot, _settings.OcrThreshold);
+            OcrScan scan = await _ocrService.RecognizeAsync(screenshot);
             _ocrPreview.Text = string.IsNullOrWhiteSpace(scan.Text) ? "(No text recognized)" : scan.Text;
+            int recognizedLines = scan.Text.Split(['\r', '\n'], StringSplitOptions.RemoveEmptyEntries).Length;
+            _monitoringLastScan.Text = $"Last scan: now  •  {recognizedLines} text line(s) recognized";
             NameMatch? match = NameMatcher.FindMatch(scan.Text, _blacklistService.Current.Entries);
 
             if (match is null)
@@ -440,7 +749,7 @@ public sealed class MainForm : Form
                 _candidateHits = 1;
             }
 
-            if (_candidateHits < Math.Clamp(_settings.RequiredConsecutiveMatches, 2, 5))
+            if (_candidateHits < RequiredConsecutiveMatches)
             {
                 SetStatus($"Possible match: {match.Alias}. Confirming on the next scan…", StatusKind.Warning);
                 return;
@@ -465,12 +774,8 @@ public sealed class MainForm : Form
         _candidateHits = 0;
         _lastCandidateKey = null;
 
-        string initialActionText = _settings.AutoDodge
-            ? "Automatic mode: leaving this lobby…"
-            : "Manual mode: dodge this lobby manually.";
-
         SetStatus($"Blacklist match: {match.Alias} ({match.Entry.Group}).", StatusKind.Warning);
-        var alert = new AlertForm(match, initialActionText);
+        var alert = new AlertForm(match, _settings.AutoDodge, countdownSeconds: 3);
         alert.FormClosed += (_, _) => alert.Dispose();
         alert.Show();
 
@@ -479,11 +784,17 @@ public sealed class MainForm : Form
             return;
         }
 
-        await Task.Delay(250);
+        AlertDecision decision = await alert.WaitForDecisionAsync();
+        if (decision != AlertDecision.Dodge)
+        {
+            SetStatus($"Automatic dodge cancelled for {match.Alias}.", StatusKind.Warning);
+            return;
+        }
+
         LobbyDodgeResult result = await InputService.SendLobbyDodgeAsync();
         string actionText = result switch
         {
-            LobbyDodgeResult.Success => "The lobby leave action was confirmed with Esc, then Enter.",
+            LobbyDodgeResult.Success => "Lobby leave confirmed with Esc, then Enter.",
             LobbyDodgeResult.DeadByDaylightNotForeground => "Automatic dodge skipped: Dead by Daylight was not the foreground window.",
             LobbyDodgeResult.EscapeRejected => "Windows rejected the Escape input; dodge manually.",
             LobbyDodgeResult.FocusLostBeforeConfirmation => "Escape was sent, but Dead by Daylight lost focus before confirmation.",
@@ -491,6 +802,7 @@ public sealed class MainForm : Form
             _ => "Automatic dodge did not complete; dodge manually."
         };
         alert.UpdateActionText(actionText);
+        SetStatus(actionText, result == LobbyDodgeResult.Success ? StatusKind.Ready : StatusKind.Warning);
     }
 
     private async void BlacklistTimerTick(object? sender, EventArgs e)
@@ -502,8 +814,9 @@ public sealed class MainForm : Form
     {
         Rectangle region = _settings.CaptureRegion;
         _regionLabel.Text = _settings.HasCaptureRegion
-            ? $"X {region.X}, Y {region.Y} • {region.Width} × {region.Height} pixels"
+            ? $"{region.Width} × {region.Height} px  •  X {region.X}, Y {region.Y}"
             : "No capture area selected";
+        _selectRegion.Text = _settings.HasCaptureRegion ? "Change area" : "Select area";
     }
 
     private void SetStatus(string message, StatusKind kind)
@@ -511,11 +824,26 @@ public sealed class MainForm : Form
         _statusLabel.Text = message;
         _statusLabel.ForeColor = kind switch
         {
-            StatusKind.Ready => Color.Gainsboro,
-            StatusKind.Monitoring => Color.FromArgb(130, 220, 155),
-            StatusKind.Warning => Color.FromArgb(255, 210, 90),
-            StatusKind.Error => Color.FromArgb(255, 100, 100),
-            _ => Color.Gainsboro
+            StatusKind.Ready => AppTheme.MutedText,
+            StatusKind.Monitoring => AppTheme.Emerald,
+            StatusKind.Warning => AppTheme.Warning,
+            StatusKind.Error => AppTheme.Danger,
+            _ => AppTheme.MutedText
+        };
+        _statusPill.Text = kind switch
+        {
+            StatusKind.Ready => "●  Ready",
+            StatusKind.Monitoring => "●  Monitoring",
+            StatusKind.Warning => "●  Attention",
+            StatusKind.Error => "●  Error",
+            _ => "●  Ready"
+        };
+        _statusPill.ForeColor = _statusLabel.ForeColor;
+        _statusPill.BackColor = kind switch
+        {
+            StatusKind.Warning => Color.FromArgb(58, 48, 25),
+            StatusKind.Error => Color.FromArgb(64, 30, 32),
+            _ => AppTheme.EmeraldSurface
         };
     }
 

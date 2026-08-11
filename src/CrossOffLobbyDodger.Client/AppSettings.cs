@@ -14,8 +14,6 @@ public sealed class AppSettings
     public bool AutoDodge { get; set; } = true;
     public string BlacklistUrl { get; set; } = DefaultBlacklistUrl;
     public int ScanIntervalMs { get; set; } = 1200;
-    public int RequiredConsecutiveMatches { get; set; } = 2;
-    public int OcrThreshold { get; set; } = 135;
     public int MatchCooldownSeconds { get; set; } = 45;
 
     public Rectangle CaptureRegion
