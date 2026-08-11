@@ -172,6 +172,12 @@ public sealed class AlertForm : Form
 
     public Task<AlertDecision> WaitForDecisionAsync() => _decision.Task;
 
+    protected override void OnHandleCreated(EventArgs e)
+    {
+        base.OnHandleCreated(e);
+        WindowChrome.ApplyDarkTitleBar(Handle);
+    }
+
     protected override void OnShown(EventArgs e)
     {
         base.OnShown(e);

@@ -16,9 +16,9 @@ public sealed class MainForm : Form
     private readonly Label _regionLabel = new();
     private readonly Label _blacklistLabel = new();
     private readonly TextBox _ocrPreview = new();
+    private readonly Label _ocrPlaceholder = new();
     private readonly RadioButton _warnOnly = new();
     private readonly RadioButton _warnAndDodge = new();
-    private readonly Label _behaviorSequence = new();
     private readonly Button _selectRegion = new();
     private readonly Button _testOcr = new();
     private readonly Button _updateBlacklist = new();
@@ -76,7 +76,7 @@ public sealed class MainForm : Form
         {
             string tessdataPath = Path.Combine(AppContext.BaseDirectory, "tessdata");
             _ocrService = new OcrService(tessdataPath);
-            SetStatus("Ready. Select the lobby-name area, then test OCR.", StatusKind.Ready);
+            SetStatus("Select the lobby-name area, then test OCR.", StatusKind.Ready);
         }
         catch (Exception exception) when (exception is FileNotFoundException or InvalidOperationException)
         {
@@ -87,6 +87,12 @@ public sealed class MainForm : Form
 
         await RefreshBlacklistAsync();
         _blacklistTimer.Start();
+    }
+
+    protected override void OnHandleCreated(EventArgs e)
+    {
+        base.OnHandleCreated(e);
+        WindowChrome.ApplyDarkTitleBar(Handle);
     }
 
     protected override void OnFormClosing(FormClosingEventArgs e)
@@ -221,10 +227,10 @@ public sealed class MainForm : Form
         _setupView.RowCount = 4;
         _setupView.Margin = new Padding(0);
         _setupView.BackColor = AppTheme.Background;
-        _setupView.RowStyles.Add(new RowStyle(SizeType.Absolute, 94));
-        _setupView.RowStyles.Add(new RowStyle(SizeType.Absolute, 84));
-        _setupView.RowStyles.Add(new RowStyle(SizeType.Absolute, 150));
-        _setupView.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
+        _setupView.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+        _setupView.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+        _setupView.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+        _setupView.RowStyles.Add(new RowStyle(SizeType.AutoSize));
 
         _setupView.Controls.Add(BuildCaptureCard(), 0, 0);
         _setupView.Controls.Add(BuildBlacklistCard(), 0, 1);
@@ -234,10 +240,10 @@ public sealed class MainForm : Form
 
     private Control BuildCaptureCard()
     {
-        var card = CreateCard(new Padding(15, 13, 15, 13), new Padding(0, 0, 0, 10));
-        var layout = CreateTwoColumnLayout();
+        var card = CreateSection(new Padding(4, 9, 4, 13), new Padding(0, 0, 0, 3));
+        var layout = CreateTwoColumnLayout(card.BackColor);
 
-        var copy = CreateCopyBlock("Lobby-name area", _regionLabel);
+        var copy = CreateCopyBlock("Lobby-name area", _regionLabel, card.BackColor);
         _regionLabel.AutoSize = true;
         _regionLabel.ForeColor = AppTheme.MutedText;
         _regionLabel.Margin = new Padding(0, 5, 0, 0);
@@ -249,16 +255,16 @@ public sealed class MainForm : Form
             FlowDirection = FlowDirection.LeftToRight,
             Anchor = AnchorStyles.Right,
             Margin = new Padding(0),
-            BackColor = AppTheme.Surface
+            BackColor = card.BackColor
         };
         _selectRegion.Text = "Change area";
-        _selectRegion.Size = new Size(112, 34);
+        _selectRegion.Size = new Size(132, 36);
         _selectRegion.Margin = new Padding(0, 0, 8, 0);
         AppTheme.StyleButton(_selectRegion, glyph: AppGlyph.SelectArea);
         _selectRegion.Click += SelectRegionClick;
 
         _testOcr.Text = "Test OCR";
-        _testOcr.Size = new Size(96, 34);
+        _testOcr.Size = new Size(114, 36);
         _testOcr.Margin = new Padding(0);
         AppTheme.StyleButton(_testOcr, glyph: AppGlyph.Ocr);
         _testOcr.Click += TestOcrClick;
@@ -272,16 +278,16 @@ public sealed class MainForm : Form
 
     private Control BuildBlacklistCard()
     {
-        var card = CreateCard(new Padding(15, 12, 15, 12), new Padding(0, 0, 0, 10));
-        var layout = CreateTwoColumnLayout();
+        var card = CreateSection(new Padding(4, 9, 4, 13), new Padding(0, 0, 0, 8));
+        var layout = CreateTwoColumnLayout(card.BackColor);
 
         _blacklistLabel.AutoSize = true;
         _blacklistLabel.ForeColor = AppTheme.MutedText;
         _blacklistLabel.Margin = new Padding(0, 5, 0, 0);
-        var copy = CreateCopyBlock("Reviewed blacklist", _blacklistLabel);
+        var copy = CreateCopyBlock("Reviewed blacklist", _blacklistLabel, card.BackColor);
 
         _updateBlacklist.Text = "Refresh";
-        _updateBlacklist.Size = new Size(96, 34);
+        _updateBlacklist.Size = new Size(108, 36);
         _updateBlacklist.Anchor = AnchorStyles.Right;
         _updateBlacklist.Margin = new Padding(0);
         AppTheme.StyleButton(_updateBlacklist, glyph: AppGlyph.Refresh);
@@ -295,19 +301,19 @@ public sealed class MainForm : Form
 
     private Control BuildBehaviorCard()
     {
-        var card = CreateCard(new Padding(15, 11, 15, 11), new Padding(0, 0, 0, 10));
+        var card = CreateSection(new Padding(15, 13, 15, 13), new Padding(0, 0, 0, 10), emphasized: true);
         var layout = new TableLayoutPanel
         {
-            Dock = DockStyle.Fill,
+            Dock = DockStyle.Top,
+            AutoSize = true,
             ColumnCount = 2,
-            RowCount = 3,
+            RowCount = 2,
             Margin = new Padding(0),
             BackColor = AppTheme.Surface
         };
         layout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50));
         layout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50));
         layout.RowStyles.Add(new RowStyle(SizeType.AutoSize));
-        layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 62));
         layout.RowStyles.Add(new RowStyle(SizeType.AutoSize));
 
         var title = CreateSectionTitle("When a match is confirmed");
@@ -317,57 +323,62 @@ public sealed class MainForm : Form
 
         _warnOnly.Text = "Warn only\r\nYou leave the lobby manually";
         _warnOnly.Dock = DockStyle.Fill;
+        _warnOnly.MinimumSize = new Size(0, 68);
         _warnOnly.Margin = new Padding(0, 0, 5, 0);
         AppTheme.StyleModeOption(_warnOnly);
         _warnOnly.CheckedChanged += BehaviorModeChanged;
 
         _warnAndDodge.Text = "Warn and dodge\r\nCancel during the alert countdown";
         _warnAndDodge.Dock = DockStyle.Fill;
+        _warnAndDodge.MinimumSize = new Size(0, 68);
         _warnAndDodge.Margin = new Padding(5, 0, 0, 0);
         AppTheme.StyleModeOption(_warnAndDodge);
         _warnAndDodge.CheckedChanged += BehaviorModeChanged;
 
-        _behaviorSequence.AutoSize = true;
-        _behaviorSequence.ForeColor = AppTheme.MutedText;
-        _behaviorSequence.Margin = new Padding(1, 8, 0, 0);
-        layout.SetColumnSpan(_behaviorSequence, 2);
-
         layout.Controls.Add(_warnOnly, 0, 1);
         layout.Controls.Add(_warnAndDodge, 1, 1);
-        layout.Controls.Add(_behaviorSequence, 0, 2);
         card.Controls.Add(layout);
         return card;
     }
 
     private Control BuildOcrPreviewCard()
     {
-        var card = CreateCard(new Padding(15, 10, 15, 10), new Padding(0));
+        var card = CreateSection(new Padding(4, 7, 4, 5), new Padding(0));
         var layout = new TableLayoutPanel
         {
-            Dock = DockStyle.Fill,
+            Dock = DockStyle.Top,
+            AutoSize = true,
             ColumnCount = 1,
-            RowCount = 2,
+            RowCount = 3,
             Margin = new Padding(0),
-            BackColor = AppTheme.Surface
+            BackColor = card.BackColor
         };
         layout.RowStyles.Add(new RowStyle(SizeType.AutoSize));
-        layout.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
+        layout.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+        layout.RowStyles.Add(new RowStyle(SizeType.AutoSize));
 
         var title = CreateSectionTitle("Last OCR result");
         title.Margin = new Padding(0, 0, 0, 6);
 
-        _ocrPreview.Dock = DockStyle.Fill;
+        _ocrPlaceholder.Text = "No test run yet. OCR contrast is tuned automatically.";
+        _ocrPlaceholder.AutoSize = true;
+        _ocrPlaceholder.ForeColor = AppTheme.MutedText;
+        _ocrPlaceholder.Margin = new Padding(1, 1, 0, 0);
+
+        _ocrPreview.Dock = DockStyle.Top;
+        _ocrPreview.Height = 52;
         _ocrPreview.Multiline = true;
         _ocrPreview.ReadOnly = true;
-        _ocrPreview.ScrollBars = ScrollBars.Vertical;
-        _ocrPreview.BackColor = AppTheme.Background;
+        _ocrPreview.ScrollBars = ScrollBars.None;
+        _ocrPreview.BackColor = AppTheme.Surface;
         _ocrPreview.ForeColor = AppTheme.MutedText;
-        _ocrPreview.BorderStyle = BorderStyle.FixedSingle;
-        _ocrPreview.Text = "No OCR test has been run yet.";
-        _ocrPreview.Margin = new Padding(0);
+        _ocrPreview.BorderStyle = BorderStyle.None;
+        _ocrPreview.Visible = false;
+        _ocrPreview.Margin = new Padding(0, 2, 0, 0);
 
         layout.Controls.Add(title, 0, 0);
-        layout.Controls.Add(_ocrPreview, 0, 1);
+        layout.Controls.Add(_ocrPlaceholder, 0, 1);
+        layout.Controls.Add(_ocrPreview, 0, 2);
         card.Controls.Add(layout);
         return card;
     }
@@ -455,34 +466,37 @@ public sealed class MainForm : Form
         return footer;
     }
 
-    private static Panel CreateCard(Padding padding, Padding margin)
+    private static Panel CreateSection(Padding padding, Padding margin, bool emphasized = false)
     {
         return new Panel
         {
-            Dock = DockStyle.Fill,
+            Dock = DockStyle.Top,
+            AutoSize = true,
+            AutoSizeMode = AutoSizeMode.GrowAndShrink,
             Padding = padding,
             Margin = margin,
-            BackColor = AppTheme.Surface,
-            BorderStyle = BorderStyle.FixedSingle
+            BackColor = emphasized ? AppTheme.Surface : AppTheme.Background,
+            BorderStyle = emphasized ? BorderStyle.FixedSingle : BorderStyle.None
         };
     }
 
-    private static TableLayoutPanel CreateTwoColumnLayout()
+    private static TableLayoutPanel CreateTwoColumnLayout(Color background)
     {
         var layout = new TableLayoutPanel
         {
-            Dock = DockStyle.Fill,
+            Dock = DockStyle.Top,
+            AutoSize = true,
             ColumnCount = 2,
             RowCount = 1,
             Margin = new Padding(0),
-            BackColor = AppTheme.Surface
+            BackColor = background
         };
         layout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
         layout.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
         return layout;
     }
 
-    private static TableLayoutPanel CreateCopyBlock(string title, Control detail)
+    private static TableLayoutPanel CreateCopyBlock(string title, Control detail, Color background)
     {
         var copy = new TableLayoutPanel
         {
@@ -491,7 +505,7 @@ public sealed class MainForm : Form
             RowCount = 2,
             Anchor = AnchorStyles.Left,
             Margin = new Padding(0),
-            BackColor = AppTheme.Surface
+            BackColor = background
         };
         copy.Controls.Add(CreateSectionTitle(title), 0, 0);
         copy.Controls.Add(detail, 0, 1);
@@ -545,9 +559,6 @@ public sealed class MainForm : Form
     {
         AppTheme.RefreshModeOption(_warnOnly);
         AppTheme.RefreshModeOption(_warnAndDodge);
-        _behaviorSequence.Text = _warnAndDodge.Checked
-            ? "Alert shown  •  3-second countdown  •  Esc  •  Enter"
-            : "Alert shown  •  you leave the lobby manually";
     }
 
     private void SelectRegionClick(object? sender, EventArgs e)
@@ -601,7 +612,7 @@ public sealed class MainForm : Form
         {
             using Bitmap screenshot = ScreenCapture.Capture(_settings.CaptureRegion);
             OcrScan scan = await _ocrService.RecognizeAsync(screenshot);
-            _ocrPreview.Text = string.IsNullOrWhiteSpace(scan.Text) ? "(No text recognized)" : scan.Text;
+            ShowOcrResult(scan.Text);
             NameMatch? match = NameMatcher.FindMatch(scan.Text, _blacklistService.Current.Entries);
             string matchText = match is null ? "no blacklist match" : $"matched {match.Alias}";
             SetStatus($"OCR confidence {scan.MeanConfidence:P0}; {matchText}.", StatusKind.Ready);
@@ -633,8 +644,11 @@ public sealed class MainForm : Form
         {
             BlacklistUpdateResult result = await _blacklistService.RefreshAsync(_settings.BlacklistUrl);
             int active = result.Document.Entries.Count(static entry => entry.Active);
-            string source = result.UsedCache ? "cached copy" : "GitHub";
-            _blacklistLabel.Text = $"●  {active} active entries  •  {source}  •  updated {result.Document.UpdatedAt:u}";
+            string state = result.Error is not null && !result.UsedCache
+                ? "Unavailable"
+                : result.UsedCache ? "Cached list" : "Up to date";
+            string entryText = active == 1 ? "1 reviewed entry" : $"{active} reviewed entries";
+            _blacklistLabel.Text = $"●  {state}  •  {entryText}  •  {FormatUpdatedAt(result.Document.UpdatedAt)}";
 
             if (result.Error is not null)
             {
@@ -691,8 +705,8 @@ public sealed class MainForm : Form
         _monitoringView.BringToFront();
         SetStatus(
             _settings.AutoDodge
-                ? "Monitoring. Confirmed matches will warn before the lobby is left."
-                : "Monitoring in manual mode. Confirmed matches will warn only.",
+                ? "Confirmed matches will warn before the lobby is left."
+                : "Confirmed matches will warn only; no keyboard input will be sent.",
             StatusKind.Monitoring);
     }
 
@@ -726,7 +740,7 @@ public sealed class MainForm : Form
         {
             using Bitmap screenshot = ScreenCapture.Capture(_settings.CaptureRegion);
             OcrScan scan = await _ocrService.RecognizeAsync(screenshot);
-            _ocrPreview.Text = string.IsNullOrWhiteSpace(scan.Text) ? "(No text recognized)" : scan.Text;
+            ShowOcrResult(scan.Text);
             int recognizedLines = scan.Text.Split(['\r', '\n'], StringSplitOptions.RemoveEmptyEntries).Length;
             _monitoringLastScan.Text = $"Last scan: now  •  {recognizedLines} text line(s) recognized";
             NameMatch? match = NameMatcher.FindMatch(scan.Text, _blacklistService.Current.Entries);
@@ -814,9 +828,49 @@ public sealed class MainForm : Form
     {
         Rectangle region = _settings.CaptureRegion;
         _regionLabel.Text = _settings.HasCaptureRegion
-            ? $"{region.Width} × {region.Height} px  •  X {region.X}, Y {region.Y}"
+            ? $"{region.Width} × {region.Height} px  •  area selected"
             : "No capture area selected";
         _selectRegion.Text = _settings.HasCaptureRegion ? "Change area" : "Select area";
+    }
+
+    private void ShowOcrResult(string text)
+    {
+        _ocrPlaceholder.Visible = false;
+        _ocrPreview.Text = string.IsNullOrWhiteSpace(text) ? "(No text recognized)" : text;
+        _ocrPreview.Visible = true;
+    }
+
+    private static string FormatUpdatedAt(DateTimeOffset updatedAt)
+    {
+        if (updatedAt == default)
+        {
+            return "update time unavailable";
+        }
+
+        TimeSpan age = DateTimeOffset.UtcNow - updatedAt.ToUniversalTime();
+        if (age < TimeSpan.FromMinutes(1))
+        {
+            return "updated just now";
+        }
+
+        if (age < TimeSpan.FromHours(1))
+        {
+            int minutes = Math.Max(1, (int)age.TotalMinutes);
+            return $"updated {minutes} min ago";
+        }
+
+        if (age < TimeSpan.FromHours(24))
+        {
+            int hours = Math.Max(1, (int)age.TotalHours);
+            return $"updated {hours} h ago";
+        }
+
+        if (age < TimeSpan.FromHours(48))
+        {
+            return "updated yesterday";
+        }
+
+        return $"updated {updatedAt:yyyy-MM-dd}";
     }
 
     private void SetStatus(string message, StatusKind kind)

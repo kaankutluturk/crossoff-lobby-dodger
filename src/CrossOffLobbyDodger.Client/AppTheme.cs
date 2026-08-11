@@ -27,6 +27,8 @@ internal static class AppTheme
         button.FlatStyle = FlatStyle.Flat;
         button.UseVisualStyleBackColor = false;
         button.Cursor = Cursors.Hand;
+        button.Padding = new Padding(9, 0, 9, 0);
+        button.TextAlign = ContentAlignment.MiddleCenter;
         button.ForeColor = primary ? Color.FromArgb(9, 24, 17) : Text;
         button.BackColor = primary ? Emerald : SurfaceHover;
         button.FlatAppearance.BorderColor = primary ? Emerald : Border;
@@ -43,7 +45,7 @@ internal static class AppTheme
             Image? previous = button.Image;
             button.Image = AppGlyphs.Create(glyph.Value, button.ForeColor);
             previous?.Dispose();
-            button.ImageAlign = ContentAlignment.MiddleLeft;
+            button.ImageAlign = ContentAlignment.MiddleCenter;
             button.TextImageRelation = TextImageRelation.ImageBeforeText;
         }
     }
